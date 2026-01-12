@@ -1,2 +1,10 @@
-# epicsdev_rigol_scope
-Server of RIGOL oscilloscopes for EPICS PVAccess
+# epicsdev_rigol_scope. **Under development**.
+Python-based EPICS PVAccess server for RIGOL oscilloscopes.
+It is based on [p4p package](https://epics-base.github.io/p4p/) and it can run standalone on Linux, OSX, and Windows platforms.<br>
+
+It is being tested with RIGOL DHO924.
+
+To start: ```python -m epicsdev_rigol_scope -a192.168.27.31 -l```<br>
+
+Control GUI:<br>
+```python -m pypeto -c path_to_repository/config -f epicsScopeRigol```<br>
