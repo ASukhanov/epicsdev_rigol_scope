@@ -7,4 +7,4 @@ It is being tested with RIGOL DHO924.
 To start: ```python -m epicsdev_rigol_scope -a192.168.27.31 -l```<br>
 
 Control GUI:<br>
-```python -m pypeto -c path_to_repository/config -f epicsScopeRigol```<br>
+```python -m pypeto -c path_to_repository/config -f epicsdev_rigol_scope```<br>

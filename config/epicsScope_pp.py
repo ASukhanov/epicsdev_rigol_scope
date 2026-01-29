@@ -1,6 +1,7 @@
 """Pypet page for oscilloscopes served by epicsDevScope* server"""
-# format: pypeto 1.2+
-__version__ = 'v1.3.0 2026-01-07'# 
+# pylint: disable=invalid-name
+# # format: pypeto 1.2+
+__version__ = 'v1.3.1 2026-01-28'
 print(f'epicsScope {__version__}')
 
 #``````````````````Definitions````````````````````````````````````````````````
@@ -22,17 +23,13 @@ LYRow = {'ATTRIBUTES':{'color':'light yellow'}}
 lColor = color('lightGreen')
 
 # definition for plotting cell
-PyPath = '~sukhanov/venv/bin/python -m'
-PaneP2P = ' '.join([f'c{i+1}Peak2Peak' for i in range(6)])
-PaneWF = ' '.join([f'c{i+1}Waveform' for i in range(6)])
+PyPath = 'python -m'
 PaneT = 'timing[1] timing[3]'
-Plot = {'Plot':{'launch':f'{PyPath} pvplot -Y-0.04:0.04 -aV:tekMSO: -#0"{PaneP2P}" -#1"{PaneWF}" -#2"{PaneT}"',
-            **lColor, **ButtonFont}}
-print(f'Plot command: {Plot}')
 #``````````````````PyPage Object``````````````````````````````````````````````
 class PyPage():
+    """Pypet page for oscilloscopes served by epicsDevScope* server"""
     def __init__(self, instance='tekMSO:',
-            title="Tektronix MSO46 Oscilloscope", channels=6):
+            title="oscilloscope", channels=6):
         """instance: unique name of the page.
         For EPICS it is usually device prefix 
         """
@@ -70,32 +67,38 @@ string or device:parameter and the value is dictionary of the features.
 
         #``````````Abbreviations, used in cell definitions
         def ChLine(suffix):
-            return [f'{D}c{ch+1}{suffix}' for ch in range(channels)]
+            return [f'{D}c{ch+1:02}{suffix}' for ch in range(channels)]
         #FOption = ' -file '+logreqMap.get(D,'')
         host = '130.199.41.111'
-        scopeWWW = {'WWW':{'launch':f'firefox http://{host}/Tektronix/#/client/c/   Tek%20e*Scope',
-            **lColor, **ButtonFont, **span(1,2)}}
+        #scopeWWW = {'WWW':{'launch':f'firefox http://{host}/Tektronix/#/client/c/   Tek%20e*Scope',
+        #    **lColor, **ButtonFont, **span(1,2)}}
+        PaneP2P = ' '.join([f'c{i+1:02}Peak2Peak' for i in range(channels)])
+        PaneWF = ' '.join([f'c{i+1:02}Waveform' for i in range(channels)])
+        Plot = {'Plot':{'launch':f'{PyPath} pvplot -aV:{instance} -#0"{PaneP2P}" -#1"{PaneWF}" -#2"{PaneT}"',
+            **lColor, **ButtonFont}}
+        print(f'Plot command: {Plot}')
 
         #``````````mandatory member```````````````````````````````````````````
         self.rows = [
-['Device:', D, {D+'version':span(2,1)},_, 'scope time:', {D+'dateTime':span(2,1)},_],
-['State:', D+'server', 'Recall:', D+'setup',_,'debug:',D+'debug'],
-['Status:', {D+'status': span(8,1)}],
-['Polling Interval:', D+'polling',_,_,_,Plot,scopeWWW],
+['Device:', D, {D+'version':span(2,1)},_, 'scope time:', {D+'dateTime':span(2,1)}],
+['State:', D+'server', 'Recall:', D+'setup',_,'verbose:',D+'verbose'],
+['Status:', {D+'status': span(6,1)}],
+['Polling Interval:', D+'polling',_,_,_,Plot,_],#scopeWWW],
 #'', {D+'ReadSetting':
 #{**color('cyan'),**span(2,1)}},_,_,],
 ['Triggers recorded:', D+'acqCount', 'Lost:', D+'lostTrigs',
-  'Acquisitions:',D+'scopeAcqCount'], 
-['Horizontal scale:', D+'timePerDiv', '     samples:', D+'recLength',
-    'SamplRate:', {D+'samplingRate':span(2,1)},_],
+  'Acquisitions:',D+'scopeAcqCount',_], 
+['Time/Div:', {D+'timePerDiv':span(2,1)},_,'recLength:', D+'recLengthS',
+  D+'recLengthR',_],
+['SamplingRate:', {D+'samplingRate':span(2,1)},_,_,_,_,_],
 #['Trigger:', D+'trigSourceS', D+'trigCouplingS', D+'trigSlopeS', 'level:', D+'trigLevelS', 'delay:', {D+'trigDelay':span(2,1)},''],
 ['Trigger state:',D+'trigState','   trigMode:',D+'trigMode',
-  'TrigLevel','TrigDelay'],
+  'TrigLevel','TrigDelay',_],
 [{D+'trigger':color('lightCyan')}, D+'trigSource', D+'trigCoupling',
-  D+'trigSlope', D+'trigLevel', D+'trigDelay'],
+  D+'trigSlope', D+'trigLevel', D+'trigDelay',_],
 [{'ATTRIBUTES':color('lightGreen')}, 'Channels:','CH1','CH2','CH3','CH4','CH5','CH6'],
-['Gain:']+ChLine('VoltsPerDiv'),
-['Offset:']+ChLine('Position'),
+['Volt/Div:']+ChLine('VoltsPerDiv'),
+['Offset:']+ChLine('VoltOffset'),
 ['Coupling:']+ChLine('Coupling'),
 ['Termination:']+ChLine('Termination'),
 ['On/Off:']+ChLine('OnOff'),
@@ -114,6 +117,6 @@ string or device:parameter and the value is dictionary of the features.
 [LYRow,'Scope command:', {D+'instrCmdS':span(2,1)},_,{D+'instrCmdR':span(4,1)}],
 [LYRow,'Special commands', {D+'instrCtrl':span(2,1)},_,_,_,_,_,],
 [LYRow,'Timing:',{D+'timing':span(6,1)}],
-[LYRow,'ActOnEvent',D+'actOnEvent','AOE_Limit',D+'aOE_Limit',_,_,_],
+#[LYRow,'ActOnEvent',D+'actOnEvent','AOE_Limit',D+'aOE_Limit',_,_,_],
 ]
 
