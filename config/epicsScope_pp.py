@@ -1,7 +1,6 @@
-"""Pypet page for oscilloscopes served by epicsDevScope* server"""
+"""Pypet page for oscilloscopes served by epicsdev-based server."""
 # pylint: disable=invalid-name
-# # format: pypeto 1.2+
-__version__ = 'v1.3.1 2026-01-28'
+__version__ = 'v1.3.2 2026-02-01'
 print(f'epicsScope {__version__}')
 
 #``````````````````Definitions````````````````````````````````````````````````
@@ -28,12 +27,11 @@ PaneT = 'timing[1] timing[3]'
 #``````````````````PyPage Object``````````````````````````````````````````````
 class PyPage():
     """Pypet page for oscilloscopes served by epicsDevScope* server"""
-    def __init__(self, instance='tekMSO:',
-            title="oscilloscope", channels=6):
+    def __init__(self, instance:str, title:str, channels=4):
         """instance: unique name of the page.
         For EPICS it is usually device prefix 
         """
-        print(f'Instantiating Page {instance,title} with {channels} channels')
+        print(f'Instantiating Page {title} for device{instance} with {channels} channels')
 
         #``````````Mandatory class members starts here````````````````````````
         self.namespace = 'PVA'
@@ -80,10 +78,13 @@ string or device:parameter and the value is dictionary of the features.
 
         #``````````mandatory member```````````````````````````````````````````
         self.rows = [
-['Device:', D, {D+'version':span(2,1)},_, 'scope time:', {D+'dateTime':span(2,1)}],
-['State:', D+'server', 'Recall:', D+'setup',_,'verbose:',D+'verbose'],
-['Status:', {D+'status': span(6,1)}],
-['Polling Interval:', D+'polling',_,_,_,Plot,_],#scopeWWW],
+#['Device:', D, {D+'version':span(2,1)},_, 'scope time:', {D+'dateTime':span(2,1)}],
+#['State:', D+'server', 'Recall:', D+'setup',_,'verbose:',D+'verbose'],
+#['Status:', {D+'status': span(6,1)}],
+#['Polling Interval:', D+'polling',_,_,_,Plot,_],#scopeWWW],
+['Device:',D, D+'server', D+'version', 'host:',D+'host',_],
+['Status:', {D+'status': span(8,1)}],
+['Cycle time:',D+'cycleTime', 'Sleep:',D+'sleep', 'Cycle:',D+'cycle', Plot],
 #'', {D+'ReadSetting':
 #{**color('cyan'),**span(2,1)}},_,_,],
 ['Triggers recorded:', D+'acqCount', 'Lost:', D+'lostTrigs',

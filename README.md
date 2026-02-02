@@ -4,7 +4,7 @@ It is based on [p4p package](https://epics-base.github.io/p4p/) and it can run s
 
 It is being tested with RIGOL DHO924.
 
-To start: ```python -m epicsdev_rigol_scope -a192.168.27.31 -l```<br>
+To start: ```python -m epicsdev_rigol_scope -r'TCPIP::192.168.27.31::INSTR'```<br>
 
 Control GUI:<br>
 ```python -m pypeto -c path_to_repository/config -f epicsdev_rigol_scope```<br>

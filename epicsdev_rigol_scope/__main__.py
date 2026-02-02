@@ -1,6 +1,7 @@
 """Simulated multi-channel ADC device server using epicsdev module."""
 # pylint: disable=invalid-name
-__version__= 'v1.0.0 26-01-28'# Major upgrade to use epicsdev module.
+__version__= 'v2.1.0 26-02-01'# updated for epicsdev v2.1.0
+#TODO: Stop acquisition once for all channels, not per channel.
 
 import sys
 import time
@@ -12,8 +13,9 @@ import numpy as np
 import pyvisa as visa
 from pyvisa.errors import VisaIOError
 
-from epicsdev.epicsdev import  Server, init_epicsdev, serverState, publish, pvobj
-from epicsdev.epicsdev import  pvv, printi, printe, printw, printv, printvv, SPV, set_server
+from epicsdev.epicsdev import  Server, SPV, init_epicsdev, sleep,\
+    serverState, set_server, publish, pvobj, pvv,\
+    printi, printe, printw, printv, printvv
 
 #``````````````````PVs defined here```````````````````````````````````````````
 def myPVDefs():
@@ -28,7 +30,7 @@ def myPVDefs():
 ['visaResource', 'VISA resource to access the device', SPV(pargs.resource,'R'), {}],
 ['dateTime',    'Scope`s date & time', SPV('N/A'), {}],
 ['acqCount',    'Number of acquisition recorded', SPV(0), {}],
-['scopeAcqCount',  'Acquisition count of the scope', SPV(0), {}],#,{SCPI:'ACQuire:NUMACq'}],
+['scopeAcqCount',  'Acquisition count of the scope', SPV(0), {}],# N/A for RIGOL
 ['lostTrigs',   'Number of triggers lost',  SPV(0), {}],
 ['instrCtrl',   'Scope control commands',
     SPV('*IDN?,*RST,*CLS,*ESR?,*OPC?,*STB?'.split(','),'WD'), {}],
@@ -511,13 +513,6 @@ def init():
 
 def rareUpdate():
     """Called for infrequent updates"""
-    # print(f'rareUpdate {time.time()}')
-    # with Threadlock:
-    #   r = query(['dateTime'])
-    # if len(r) > 0:
-    #    publish('dateTime', (r[0]))
-    # LC#publish('actOnEvent', r[0], IF_CHANGED)
-
     update_scopeParameters()
     #publish('scopeAcqCount', C_.numacq, IF_CHANGED)
     publish('lostTrigs', C_.triggersLost, IF_CHANGED)
@@ -528,9 +523,6 @@ def rareUpdate():
 
 def poll():
     """Example of polling function"""
-    cycle = pvv('cycle')
-    printv(f'cycle {repr(cycle)}')
-    publish('cycle', cycle + 1)
     tnow = time.time()
     if tnow - C_.lastRareUpdate > 1.:
         C_.lastRareUpdate = tnow
@@ -545,10 +537,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = __doc__,
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     epilog=f'{__version__}')
-    parser.add_argument('-c', '--channels', type=int, default=6, help=
+    parser.add_argument('-c', '--channels', type=int, default=4, help=
     'Number of channels per device')
-    parser.add_argument('-p', '--prefix', default='rigol0:', help=
-    'Prefix to be prepended to all PVs')
+    parser.add_argument('-d', '--device', default='rigol', help=
+    'Device name, the PV name will be <device><index>:')
+    parser.add_argument('-i', '--index', default='0', help=
+    'Device index, the PV name will be <device><index>:') 
     parser.add_argument('-r', '--resource', default='TCPIP::192.168.27.31::INSTR', help=
     'Resource string to access the device')
     parser.add_argument('-v', '--verbose', action='count', default=0, help=
@@ -557,9 +551,9 @@ if __name__ == "__main__":
     print(f'pargs: {pargs}')
 
     # Initialize epicsdev and PVs
+    pargs.prefix = f'{pargs.device}{pargs.index}:'
     C_.PvDefs = myPVDefs()
     PVs = init_epicsdev(pargs.prefix, C_.PvDefs, pargs.verbose, serverStateChanged)
-    printi(f'Hosting {len(PVs)} PVs')
 
     # Initialize the device, using pargs if needed.
     # That can be used to set the number of points in the waveform, for example.
@@ -570,12 +564,12 @@ if __name__ == "__main__":
 
     # Main loop
     server = Server(providers=[PVs])
-    printi(f'Server started with polling interval {repr(pvv("polling"))} S.')
+    printi(f'Server for {pargs.prefix} started. Sleeping per cycle: {repr(pvv("sleep"))} S.')
     while True:
         state = serverState()
         if state.startswith('Exit'):
             break
         if not state.startswith('Stop'):
             poll()
-        time.sleep(pvv("polling"))
+        sleep()
     printi('Server is exited')
