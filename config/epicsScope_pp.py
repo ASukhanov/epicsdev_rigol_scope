@@ -14,7 +14,8 @@ def slider(minValue,maxValue):
     """Definition of the GUI element: horizontal slider with flexible range"""
     return {'widget':'hslider','opLimits':[minValue,maxValue],'span':[2,1]}
 
-LargeFont = {'color':'light gray', **font(18), 'fgColor':'dark green'}
+LargeFont = {'color':'light gray', 'font':['Arial',13],
+    'fgColor':'dark green'}
 ButtonFont = {'font':['Open Sans Extrabold',14]}# Comic Sans MS
 # Attributes for gray row, it should be in the first cell:
 #GrayRow = {'ATTRIBUTES':{'color':'light gray', **font(12)}}
@@ -23,7 +24,7 @@ lColor = color('lightGreen')
 
 # definition for plotting cell
 PyPath = 'python -m'
-PaneT = 'timing[1] timing[3]'
+PaneT = 'timing[1] timing[2] timing[3]'
 #``````````````````PyPage Object``````````````````````````````````````````````
 class PyPage():
     """Pypet page for oscilloscopes served by epicsDevScope* server"""
@@ -70,7 +71,7 @@ string or device:parameter and the value is dictionary of the features.
         host = '130.199.41.111'
         #scopeWWW = {'WWW':{'launch':f'firefox http://{host}/Tektronix/#/client/c/   Tek%20e*Scope',
         #    **lColor, **ButtonFont, **span(1,2)}}
-        PaneP2P = ' '.join([f'c{i+1:02}Peak2Peak' for i in range(channels)])
+        PaneP2P = ' '.join([f'c{i+1:02}Peak2Peak c{i+1:02}Mean' for i in range(channels)])
         PaneWF = ' '.join([f'c{i+1:02}Waveform' for i in range(channels)])
         Plot = {'Plot':{'launch':f'{PyPath} pvplot -aV:{instance} -#0"{PaneP2P}" -#1"{PaneWF}" -#2"{PaneT}"',
             **lColor, **ButtonFont}}
@@ -82,7 +83,8 @@ string or device:parameter and the value is dictionary of the features.
 #['State:', D+'server', 'Recall:', D+'setup',_,'verbose:',D+'verbose'],
 #['Status:', {D+'status': span(6,1)}],
 #['Polling Interval:', D+'polling',_,_,_,Plot,_],#scopeWWW],
-['Device:',D, D+'server', D+'version', 'host:',D+'host',_],
+['Device:',D, {D+'server':LargeFont}, {'Save:':just(2)},D+'setup',
+    D+'host', D+'version'],
 ['Status:', {D+'status': span(8,1)}],
 ['Cycle time:',D+'cycleTime', 'Sleep:',D+'sleep', 'Cycle:',D+'cycle', Plot],
 #'', {D+'ReadSetting':
@@ -106,6 +108,7 @@ string or device:parameter and the value is dictionary of the features.
 #['Delay:']+ChLine('DelayFromTriggerM'),
 #['Waveform:']+ChLine('WaveforM'),
 ['Peak2Peak:']+ChLine('Peak2Peak'),
+['Mean:']+ChLine('Mean'),
 #[''],
 # ["Trigger",D+'trigSourceS',D+'trigLevelS',D+'trigSlopeS',D+'trigModeS'],
 # ['',"Setup"],
