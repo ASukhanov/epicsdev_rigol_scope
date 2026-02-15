@@ -18,4 +18,4 @@ Control GUI:<br>
 
 ## Performance
 The network interface of DHO924 is 100BASE-T.
-The measured data output rate is 3.3 Mpts/s for SOCKET and 2.2Mpts for INSTR visa resources.
+The measured data output rate is 3.3 MPPS (6.6 MB/s) for SOCKET and 2.2 MPPS (4.4 MB/s) for INSTR visa resources.
