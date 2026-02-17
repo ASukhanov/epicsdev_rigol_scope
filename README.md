@@ -12,7 +12,7 @@ For control GUI and plotting:
 ## Run
 To start: ```python -m epicsdev_rigol_scope -r'TCPIP::192.168.27.31::INSTR'```<br>
 Control GUI:<br>
-```python -m pypeto -c path_to_repository/config -f epicsdev_rigol_scope```<br>
+```python -m pypeto -irigol0: -c<path_to_repository/config> -fepicsScope```<br>
 
 ![Control page](docs/pypet.jpg), ![Plots](docs/pvplot.jpg)
 
