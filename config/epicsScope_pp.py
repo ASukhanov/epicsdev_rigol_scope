@@ -90,7 +90,7 @@ string or device:parameter and the value is dictionary of the features.
 #['State:', D+'server', 'Recall:', D+'setup',_,'verbose:',D+'verbose'],
 #['Status:', {D+'status': span(6,1)}],
 #['Polling Interval:', D+'polling',_,_,_,Plot,_],#scopeWWW],
-['Device:',D, D+'server', D+'version', 'host:',D+'host',_],
+['Device:',D, D+'server', D+'VERSION', 'host:',D+'HOSTNAME',_],
 ['Status:', {D+'status': span(8,1)}],
 ['Cycle time:',D+'cycleTime', 'Sleep:',D+'sleep', 'Cycle:',D+'cycle', Plot],
 #'', {D+'ReadSetting':

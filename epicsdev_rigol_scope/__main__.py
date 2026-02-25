@@ -1,6 +1,6 @@
 """Simulated multi-channel ADC device server using epicsdev module."""
 # pylint: disable=invalid-name
-__version__= 'v2.2.0 26-02-15'# Many changes. Tested. Ready for production use.
+__version__= 'v3.0.1 26-02-24'# Updated for epicsdev v3.x compatibility.
 
 import sys
 import time
@@ -17,82 +17,81 @@ from epicsdev import epicsdev as edev
 #``````````````````PVs defined here```````````````````````````````````````````
 def myPVDefs():
     """PV definitions"""
-    SET,U,LL,LH,SCPI = 'setter','units','limitLow','limitHigh','scpi'
+    F,SET,U,LL,LH,SCPI = 'features','setter','units','limitLow','limitHigh','scpi'
     alarm = {'valueAlarm':{'lowAlarmLimit':-9., 'highAlarmLimit':9.}}
     pvDefs = [
 # instruments's PVs
 ['setup', 'Save/recall instrument state to/from latest or operational setup',
-    edev.SPV(['Setup','Save latest','Save oper','Recall latest','Recall oper'],'WD'),
-    {SET:set_setup}],
-['visaResource', 'VISA resource to access the device', edev.SPV(pargs.resource,'R'), {}],
-['dateTime',    'Scope`s date & time', edev.SPV('N/A'), {}],
-['acqCount',    'Number of acquisition recorded', edev.SPV(0), {}],
-['scopeAcqCount',  'Acquisition count of the scope', edev.SPV(0), {}],# N/A for RIGOL
-['lostTrigs',   'Number of triggers lost',  edev.SPV(0), {}],
+    ['Setup','Save latest','Save oper','Recall latest','Recall oper'],
+    {F:'WD', SET:set_setup}],
+['visaResource', 'VISA resource to access the device', pargs.resource],
+['dateTime',    'Scope`s date & time', 'N/A'],
+['acqCount',    'Number of acquisition recorded', 0],
+['scopeAcqCount',  'Acquisition count of the scope', 0],# N/A for RIGOL
+['lostTrigs',   'Number of triggers lost',  0],
 ['instrCtrl',   'Scope control commands',
-    edev.SPV('*IDN?,*RST,*CLS,*ESR?,*OPC?,*STB?'.split(','),'WD'), {}],
-['instrCmdS',   'Execute a scope command. Features: RWE',  edev.SPV('*IDN?','W'), {
-    SET:set_instrCmdS}],
-['instrCmdR',   'Response of the instrCmdS',  edev.SPV(''), {}],
-#``````````````````Horizontal PVs
+    '*IDN?,*RST,*CLS,*ESR?,*OPC?,*STB?'.split(','), {F:'WD'}],
+['instrCmdS',   'Execute a scope command. Features: RWE',  '*IDN?',
+    {F:'W', SET:set_instrCmdS}],
+['instrCmdR',   'Response of the instrCmdS', ''],
+# #``````````````````Horizontal PVs
 ['recLengthS',   'Number of points per waveform',
-    edev.SPV(['AUTO','1k','10k','100k','1M','5M','10M','25M','50M'],'WD'), {
-    SET:set_recLengthS}],
-['recLengthR',   'Number of points per waveform read', edev.SPV(0.), {
-    SCPI:'ACQuire:MDEPth'}],
-['samplingRate', 'Sampling Rate',  edev.SPV(0.), {U:'Hz',
-    SCPI:'ACQuire:SRATe'}],
-['timePerDiv', f'Horizontal scale (1/{NDIVSX} of full scale)', edev.SPV(2.e-6,'W'), {U:'S/du',
-    SCPI: 'TIMebase:SCALe', SET:set_scpi}],
-['tAxis',       'Horizontal axis array', edev.SPV([0.]), {U:'S'}],
+    ['AUTO','1k','10k','100k','1M','5M','10M','25M','50M'],
+    {F:'WD', SET:set_recLengthS}],
+['recLengthR',   'Number of points per waveform read', 0.,
+    {SCPI:'ACQuire:MDEPth'}],
+['samplingRate', 'Sampling Rate',  0.,
+    {U:'Hz', SCPI:'ACQuire:SRATe'}],
+['timePerDiv', f'Horizontal scale (1/{NDIVSX} of full scale)', 2.e-6, 
+    {F:'W', U:'S/du', SCPI: 'TIMebase:SCALe', SET:set_scpi}],
+['tAxis',       'Horizontal axis array', [0.], {U:'S'}],
 
 #``````````````````Trigger PVs
-['trigger',     'Click to force trigger event to occur',
-    edev.SPV(['Trigger','Force!'],'WD'), {SET:set_trigger}],
-['trigType',   'Trigger ', edev.SPV(['EDGE','PULS','SLOP','VID'],'WD'),{
-    SCPI:'TRIGger:MODE', SET:set_scpi}],
-['trigCoupling',   'Trigger coupling', edev.SPV(['DC','AC','LFR','HFR'],'WD'),{
-    SCPI:'TRIGger:COUPling', SET:set_scpi}],
-['trigState',   'Current trigger status: TD,WAIT,RUN,AUTO and STOP', edev.SPV('?'),{
-    SCPI:'TRIGger:STATus'}],
-['trigMode',   'Trigger mode', edev.SPV(['NORM','AUTO','SING'],'WD'),{
-    SCPI:'TRIGger:SWEep', SET:set_scpi}],
-['trigDelay',   'Trigger position', edev.SPV(0.,'W'), {U:'S',
-    SCPI:'TIMebase:OFFSet', SET:set_scpi}],
+['trigger',     'Click to force trigger event to occur', ['Trigger','Force!'],
+    {F:'WD', SET:set_trigger}],
+['trigType',   'Trigger ', ['EDGE','PULS','SLOP','VID'],
+    {F:'WD', SCPI:'TRIGger:MODE', SET:set_scpi}],
+['trigCoupling',   'Trigger coupling', ['DC','AC','LFR','HFR'],
+    {F:'WD', SCPI:'TRIGger:COUPling', SET:set_scpi}],
+['trigState',   'Current trigger status: TD,WAIT,RUN,AUTO and STOP', '?',
+    {SCPI:'TRIGger:STATus'}],
+['trigMode',   'Trigger mode', ['NORM','AUTO','SING'],
+    {F:'WD', SCPI:'TRIGger:SWEep', SET:set_scpi}],
+['trigDelay',   'Trigger position', 0.,
+    {F:'W', U:'S', SCPI:'TIMebase:OFFSet', SET:set_scpi}],
 ['trigSource', 'Trigger source',
-    edev.SPV('CHAN1,CHAN2,CHAN3,CHAN4,EXT,D0,D1,D2,D3,D4,D5,D6,D7'.split(','),'WD'),{
-    SCPI:'TRIGger:EDGE:SOURce', SET:set_scpi}],
-['trigSlope',  'Trigger slope', edev.SPV(['POS','NEG','RFALI'],'WD'),{
-    SCPI:'TRIGger:EDGE:SLOPe', SET:set_scpi}],
-['trigLevel', 'Trigger level', edev.SPV(0.,'W'), {U:'V',
-    SCPI:'TRIGger:EDGE:LEVel', SET:set_scpi}],
+    'CHAN1,CHAN2,CHAN3,CHAN4,EXT,D0,D1,D2,D3,D4,D5,D6,D7'.split(','),
+    {F:'WD', SCPI:'TRIGger:EDGE:SOURce', SET:set_scpi}],
+['trigSlope',  'Trigger slope', ['POS','NEG','RFALI'],
+    {F:'WD', SCPI:'TRIGger:EDGE:SLOPe', SET:set_scpi}],
+['trigLevel', 'Trigger level', 0.,
+    {F:'W', U:'V', SCPI:'TRIGger:EDGE:LEVel', SET:set_scpi}],
 #``````````````````Auxiliary PVs
-['timing',  'Performance timing', edev.SPV([0.]), {U:'S'}],
+['timing',  'Performance timing', [0.], {U:'S'}],
     ]
-
     #``````````````Templates for channel-related PVs.
     # The <n> in the name will be replaced with channel number.
     # Important: SPV cannot be used in this list!
     ChannelTemplates = [
-['c<n>OnOff', 'Enable/disable channel', (['1','0'],'WD'),{
-    SCPI:'CHANnel<n>:DISPlay', SET:set_scpi}],
-['c<n>Coupling', 'Channel coupling', (['DC','AC','GND'],'WD'),{
-    SCPI:'CHANnel<n>:COUPling', SET:set_scpi}],
-['c<n>VoltsPerDiv',  'Vertical scale',  (1E-3,'W'), {U:'V/du',
-    SCPI:'CHANnel<n>:SCALe', SET:set_scpi, LL:500E-6, LH:10.}],
-['c<n>VoltOffset',  'Vertical offset',  (0.,'W'), {U:'V',
-    SCPI:'CHANnel<n>:OFFSet', SET:set_scpi}],
-['c<n>Termination', 'Input termination', ('1M','R'), {U:'Ohm'}],# fixed in RIGOL
-['c<n>Waveform', 'Waveform array',           ([0.],), {U:'du'}],
-['c<n>Mean',     'Mean of the waveform',     (0.,'A'), {U:'V'}],
-['c<n>Peak2Peak','Peak-to-peak amplitude',   (0.,'A'), {U:'V',**alarm}],
+['c<n>OnOff', 'Enable/disable channel', ['1','0'],
+    {F:'WD', SCPI:'CHANnel<n>:DISPlay', SET:set_scpi}],
+['c<n>Coupling', 'Channel coupling', ['DC','AC','GND'],
+    {F:'WD', SCPI:'CHANnel<n>:COUPling', SET:set_scpi}],
+['c<n>VoltsPerDiv',  'Vertical scale',  1E-3,
+    {F:'W',U:'V/du', SCPI:'CHANnel<n>:SCALe', SET:set_scpi, LL:500E-6, LH:10.}],
+['c<n>VoltOffset',  'Vertical offset',  0., 
+    {F:'W', U:'V', SCPI:'CHANnel<n>:OFFSet', SET:set_scpi}],
+['c<n>Termination', 'Input termination', '1M',      {U:'Ohm'}],# fixed in RIGOL
+['c<n>Waveform', 'Waveform array',           [0.],  {U:'du'}],
+['c<n>Mean',     'Mean of the waveform',     0.,    {U:'V'}],
+['c<n>Peak2Peak','Peak-to-peak amplitude',   0.,    {U:'V',**alarm}],
     ]
-    # extend PvDefs with channel-related PVs
+    #extend PvDefs with channel-related PVs
     for ch in range(pargs.channels):
         for pvdef in ChannelTemplates:
             newpvdef = pvdef.copy()
             newpvdef[0] = pvdef[0].replace('<n>',f'{ch+1:02}')
-            newpvdef[2] = edev.SPV(*pvdef[2])
+            #newpvdef[2] = *pvdef[2])
             pvDefs.append(newpvdef)
     return pvDefs
 #,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
@@ -122,6 +121,7 @@ class C_():
     xincrement = 0.
     npoints = 0
     ypars = None
+    pvDiscrete = {}
 #``````````````````Setters````````````````````````````````````````````````````
 def scopeCmd(cmd):
     """Send command to scope, return reply if any."""
@@ -133,7 +133,7 @@ def scopeCmd(cmd):
                 reply = C_.scope.query(cmd)
             else:
                 C_.scope.write(cmd)
-    except:
+    except VisaIOError:
         handle_exception(f'in scopeCmd{cmd}')
     return reply
 
@@ -208,7 +208,7 @@ def set_scpi(value, pv, *_):
         return
     scpi = scpi.replace('<n>',pv.name[2])# replace <n> with channel number
     print(f'set_scpi: {scpi} {value}')
-    scpi += f' {value}' if pv.writable else '?'
+    scpi += f' {value}'
     edev.printv(f'set_scpi command: {scpi}')
     reply = scopeCmd(scpi)
     if reply is not None:
@@ -294,13 +294,13 @@ def init_visa():
     try:
         C_.scope.clear()
         print("Instrument buffer cleared successfully.")
-    except Exception as e:
+    except VisaIOError as e:
         print(f"An error occurred during clearing the buffer: {e}")
         sys.exit(1)
 
     try:
         idn = C_.scope.query('*IDN?')
-    except Exception as e:
+    except VisaIOError as e:
         edev.printe(f"An error occurred during IDN query: {e}")
         if 'SOCKET' in resourceName:
             print('You may need to disable VXI server on the instrument.')
@@ -312,8 +312,7 @@ def init_visa():
 
     try:
         C_.scope.write('*CLS') # clear ESR, previous error messages will be cleared
-        pass
-    except Exception as e:
+    except VisaIOError as e:
         edev.printe(f'Resource {resourceName} not responding: {e}')
         sys.exit()
 
@@ -336,7 +335,7 @@ def adopt_local_setting():
     ct = time.time()
     nothingChanged = True
     try:
-        edev.printvv(f'readSettingQuery: {C_.readSettingQuery}')
+        edev.printi(f'readSettingQuery: {C_.readSettingQuery}')
         with Threadlock:
             values = C_.scope.query(C_.readSettingQuery).split(';')
         edev.printvv(f'parnames: {C_.scpi.keys()}')
@@ -348,19 +347,22 @@ def adopt_local_setting():
             sys.exit(1)
         for parname,v in zip(C_.scpi, values):
             pv = edev.pvobj(parname)
-            pvValue = pv.current()
-            if pv.discrete:
-                pvValue = str(pvValue)
+            current_value = pv.current()
+            if C_.pvDiscrete.get(parname, False):
+                pvValue = str(current_value)
+                v = str(v)
             else:
+                raw_value = current_value.raw.value if hasattr(current_value, 'raw') else current_value
                 try:
-                    v = type(pvValue.raw.value)(v)
+                    v = type(raw_value)(v)
                 except ValueError:
-                    edev.printe(f'ValueError converting {v} to {type(pvValue.raw.value)} for PV {parname}')
+                    edev.printe(f'ValueError converting {v} to {type(raw_value)} for PV {parname}')
                     sys.exit(1)
+                pvValue = raw_value
             #printv(f'parname,v: {parname, type(v), v, type(pvValue), pvValue}')
             valueChanged = pvValue != v
             if valueChanged:
-                edev.printv(f'posting {pv.name}={v}')
+                edev.printv(f'posting {parname}={v}')
                 pv.post(v, timestamp=ct)
                 nothingChanged = False
 
@@ -400,9 +402,6 @@ def trigger_is_detected():
                 else:
                     edev.printw(f'Exception  #{C_.exceptionCount[exc]} during processing: {exc}')
         return False
-    except Exception as e:
-        edev.printe(f'Exception in query for trigger: {e}')
-        sys.exit(1)
 
     # last query was successfull, clear error counts
     for i in C_.exceptionCount:
@@ -414,7 +413,7 @@ def trigger_is_detected():
 
     # trigger detected
     C_.numacq += 1
-    C_.trigtime = time.time()
+    C_.trigTime = time.time()
     ElapsedTime['trigger_detection'] = round(ts - timer(),6)
     edev.printv(f'Trigger detected {C_.numacq}')
     return True
@@ -430,7 +429,7 @@ def acquire_waveforms():
     ElapsedTime['publish_wf'] = 0.
     # stop acquisition to read preamble and waveform,
     # because they may change during acquisition
-    C_.scope.write(f':STOP')
+    C_.scope.write(':STOP')
     for ch in C_.channelsTriggered:
         # refresh scalings
         ts = timer()
@@ -461,31 +460,33 @@ def acquire_waveforms():
             ts = timer()
             operation = 'publishing'
             edev.publish(f'c{ch:02}Waveform', v+offset, t=C_.trigTime)
-            edev.publish(f'c{ch:02}Peak2Peak', np.ptp(v), t = C_.trigtime)
-            edev.publish(f'c{ch:02}Mean', v.mean(), t = C_.trigtime)
+            edev.publish(f'c{ch:02}Peak2Peak', np.ptp(v), t = C_.trigTime)
+            edev.publish(f'c{ch:02}Mean', v.mean(), t = C_.trigTime)
         except visa.errors.VisaIOError as e:
             edev.printe(f'Visa exception in {operation} for {ch}:{e}')
             break
-        except Exception as e:
-            edev.printe(f'Exception in {operation} of channel {ch}: {e}')
 
         ElapsedTime['publish_wf'] -= timer() - ts
     # after acquisition is done, restart it to be ready for the next trigger
-    C_.scope.write(f':RUN')
+    C_.scope.write(':RUN')
     wait_for_scopeReady()
     ElapsedTime['acquire_wf'] -= timer()
     edev.printvv(f'elapsedTime: {ElapsedTime}')
 
 def make_readSettingQuery():
     """Create combined SCPI query to read all settings at once"""
+    edev.printv('make_readSettingQuery')
     for pvdef in C_.PvDefs:
         pvname = pvdef[0]
+        extra = pvdef[3] if len(pvdef) > 3 else {}
+        features = extra.get('features','')
+        C_.pvDiscrete[pvname] = 'D' in features
         # if setter is defined, add it to the setterMap
-        setter = pvdef[3].get('setter',None)
+        setter = extra.get('setter',None)
         if setter is not None:
             C_.setterMap[pvname] = setter
         # if SCPI is defined, add it to the readSettingQuery
-        scpi = pvdef[3].get('scpi',None)
+        scpi = extra.get('scpi',None)
         if scpi is None:
             continue
         scpi = scpi.replace('<n>',pvname[2])#
@@ -503,14 +504,14 @@ def make_readSettingQuery():
             C_.scpi[pvname] = scpi
         
     C_.readSettingQuery = '?;'.join(C_.scpi.values()) + '?'
-    edev.printv(f'readSettingQuery: {C_.readSettingQuery}')
+    edev.printv(f'readSettingQueryv {C_.readSettingQuery}')
     edev.printv(f'setterMap: {C_.setterMap}')
 
 def init():
     """Module initialization"""
     init_visa()
     make_readSettingQuery()
-    adopt_local_setting()
+    #adopt_local_setting()# not necessary, it will be called in serverStateChanged when server is started
 
 def periodicUpdate():
     """Called for infrequent updates"""
@@ -519,7 +520,7 @@ def periodicUpdate():
         time.sleep(0.1)
     try:
         update_scopeParameters()
-    except:
+    except VisaIOError:
         handle_exception('in update_scopeParameters')
     #publish('scopeAcqCount', C_.numacq, IF_CHANGED)
     edev.publish('lostTrigs', C_.triggersLost, IF_CHANGED)
