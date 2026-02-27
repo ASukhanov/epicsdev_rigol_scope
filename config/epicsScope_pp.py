@@ -14,7 +14,7 @@ def slider(minValue,maxValue):
     """Definition of the GUI element: horizontal slider with flexible range"""
     return {'widget':'hslider','opLimits':[minValue,maxValue],'span':[2,1]}
 
-LargeFont = {'color':'light gray', **font(18), 'fgColor':'dark green'}
+LargeFont = {'color':'light gray', **font(13), 'fgColor':'dark green'}
 ButtonFont = {'font':['Open Sans Extrabold',14]}# Comic Sans MS
 # Attributes for gray row, it should be in the first cell:
 #GrayRow = {'ATTRIBUTES':{'color':'light gray', **font(12)}}
@@ -86,15 +86,10 @@ string or device:parameter and the value is dictionary of the features.
 
         #``````````mandatory member```````````````````````````````````````````
         self.rows = [
-#['Device:', D, {D+'version':span(2,1)},_, 'scope time:', {D+'dateTime':span(2,1)}],
-#['State:', D+'server', 'Recall:', D+'setup',_,'verbose:',D+'verbose'],
-#['Status:', {D+'status': span(6,1)}],
-#['Polling Interval:', D+'polling',_,_,_,Plot,_],#scopeWWW],
-['Device:',D, D+'server', D+'VERSION', 'host:',D+'HOSTNAME',_],
+['Device:',D, {D+'server':LargeFont}, {'Save:':just(2)}, D+'setup',
+    D+'HOSTNAME', D+'VERSION'],
 ['Status:', {D+'status': span(8,1)}],
 ['Cycle time:',D+'cycleTime', 'Sleep:',D+'sleep', 'Cycle:',D+'cycle', Plot],
-#'', {D+'ReadSetting':
-#{**color('cyan'),**span(2,1)}},_,_,],
 ['Triggers recorded:', D+'acqCount', 'Lost:', D+'lostTrigs',
   'Acquisitions:',D+'scopeAcqCount',_], 
 ['Time/Div:', {D+'timePerDiv':span(2,1)},_,'recLength:', D+'recLengthS',
@@ -111,21 +106,11 @@ string or device:parameter and the value is dictionary of the features.
 ['Coupling:']+ChLine('Coupling'),
 ['Termination:']+ChLine('Termination'),
 ['On/Off:']+ChLine('OnOff'),
-#['Delay:']+ChLine('DelayFromTriggerM'),
-#['Waveform:']+ChLine('WaveforM'),
 ['Peak2Peak:']+ChLine('Peak2Peak'),
-#[''],
-# ["Trigger",D+'trigSourceS',D+'trigLevelS',D+'trigSlopeS',D+'trigModeS'],
-# ['',"Setup"],
-# ["Repair:",D+'updateDataA',D+'deviceClearA',D+'resetScopeA',D+'forceTrigA'],
-# ["Session",D+'SaveSession',D+'RecallSession',"folder:",D+'folderS'],
-# [D+'currentSessionS',"<-current",D+'nextSessionS',"out off",D+'sessionsM'],
-#[{'ATTRIBUTES':{'color':'yellow'}},
-#['tAxis:',D+'tAxis'],
+['Mean:']+ChLine('Mean'),
 [LYRow,'',{'For Experts only!':{**span(6,1),**font(14)}}],
 [LYRow,'Scope command:', {D+'instrCmdS':span(2,1)},_,{D+'instrCmdR':span(4,1)}],
 [LYRow,'Special commands', {D+'instrCtrl':span(2,1)},_,_,_,_,_,],
 [LYRow,'Timing:',{D+'timing':span(6,1)}],
-#[LYRow,'ActOnEvent',D+'actOnEvent','AOE_Limit',D+'aOE_Limit',_,_,_],
 ]
 
