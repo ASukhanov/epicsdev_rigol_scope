@@ -1,6 +1,6 @@
 """Simulated multi-channel ADC device server using epicsdev module."""
 # pylint: disable=invalid-name
-__version__= 'v3.0.1 26-02-24'# Updated for epicsdev v3.x compatibility.
+__version__= 'v3.0.2 26-02-04'# Updated for epicsdev v3.1.3 compatibility.
 
 import sys
 import time
@@ -538,7 +538,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = __doc__,
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     epilog=f'{__version__}')
-    parser.add_argument('-c', '--channels', type=int, default=4, help=
+    parser.add_argument('-a', '--autosave', nargs='?', default='', help=
+'Autosave control. If not given, then autosave is enabled with default file '\
+'name /tmp/<device><index>.cache. ' \
+'If given without argument, then autosave is disabled' \
+'If a file name is given, then it is used for autosave.')
+    parser.add_argument('-c', '--recall', action='store_false', help=
+'If given: Do not load initial values from pvCache file. That is useful when you want to start with default values, but do not want to disable autosave. By default, the initial values are loaded from the cache file if it exists.')
+    parser.add_argument('-C', '--channels', type=int, default=4, help=
     'Number of channels per device')
     parser.add_argument('-d', '--device', default='rigol', help=
     'Device name, the PV name will be <device><index>:')
@@ -546,6 +553,8 @@ if __name__ == "__main__":
     'Device index, the PV name will be <device><index>:') 
     parser.add_argument('-r', '--resource', default='TCPIP::192.168.27.31::INSTR', help=
     'Resource string to access the device, e.g. TCPIP::192.168.27.31::5555::SOCKET')
+    parser.add_argument('-p', '--putlogPV', default='putlog:dump', help=
+'Name of the PV where put operations are logged. If None, then put operations are not logged.')
     parser.add_argument('-v', '--verbose', action='count', default=0, help=
     'Show more log messages (-vv: show even more)') 
     pargs = parser.parse_args()
@@ -554,7 +563,9 @@ if __name__ == "__main__":
     # Initialize epicsdev and PVs
     pargs.prefix = f'{pargs.device}{pargs.index}:'
     C_.PvDefs = myPVDefs()
-    PVs = edev.init_epicsdev(pargs.prefix, C_.PvDefs, pargs.verbose, serverStateChanged)
+    PVs = edev.init_epicsdev(pargs.prefix, C_.PvDefs, pargs.verbose,
+        serverStateChanged, None, pargs.autosave, pargs.recall,
+        pargs.putlogPV)
 
     # Initialize the device, using pargs if needed.
     # That can be used to set the number of points in the waveform, for example.
