@@ -1,6 +1,7 @@
 """Simulated multi-channel ADC device server using epicsdev module."""
 # pylint: disable=invalid-name
-__version__= 'v3.0.2 26-02-04'# Updated for epicsdev v3.1.3 compatibility.
+__version__= 'v3.0.3 26-02-18'# Added RMS PVs
+#TODO: Single triggering need to be atomated. Firing will turn trigState to Stop.
 
 import sys
 import time
@@ -84,6 +85,7 @@ def myPVDefs():
 ['c<n>Termination', 'Input termination', '1M',      {U:'Ohm'}],# fixed in RIGOL
 ['c<n>Waveform', 'Waveform array',           [0.],  {U:'du'}],
 ['c<n>Mean',     'Mean of the waveform',     0.,    {U:'V'}],
+['c<n>RMS',      'RMS of the waveform',      0.,    {U:'V'}],
 ['c<n>Peak2Peak','Peak-to-peak amplitude',   0.,    {U:'V',**alarm}],
     ]
     #extend PvDefs with channel-related PVs
@@ -207,7 +209,6 @@ def set_scpi(value, pv, *_):
         edev.printe(f'No SCPI defined for PV {pv.name}')
         return
     scpi = scpi.replace('<n>',pv.name[2])# replace <n> with channel number
-    print(f'set_scpi: {scpi} {value}')
     scpi += f' {value}'
     edev.printv(f'set_scpi command: {scpi}')
     reply = scopeCmd(scpi)
@@ -335,7 +336,7 @@ def adopt_local_setting():
     ct = time.time()
     nothingChanged = True
     try:
-        edev.printi(f'readSettingQuery: {C_.readSettingQuery}')
+        edev.printv(f'readSettingQuery: {C_.readSettingQuery}')
         with Threadlock:
             values = C_.scope.query(C_.readSettingQuery).split(';')
         edev.printvv(f'parnames: {C_.scpi.keys()}')
@@ -408,7 +409,7 @@ def trigger_is_detected():
         C_.exceptionCount[i] = 0
     edev.publish('trigState', trigStatus, IF_CHANGED)
 
-    if not trigStatus.startswith('TD'):
+    if edev.pvv('trigMode') == 'NORMAL' and not trigStatus.startswith('TD'):
         return False
 
     # trigger detected
@@ -462,6 +463,7 @@ def acquire_waveforms():
             edev.publish(f'c{ch:02}Waveform', v+offset, t=C_.trigTime)
             edev.publish(f'c{ch:02}Peak2Peak', np.ptp(v), t = C_.trigTime)
             edev.publish(f'c{ch:02}Mean', v.mean(), t = C_.trigTime)
+            edev.publish(f'c{ch:02}RMS', v.std(), t = C_.trigTime)
         except visa.errors.VisaIOError as e:
             edev.printe(f'Visa exception in {operation} for {ch}:{e}')
             break

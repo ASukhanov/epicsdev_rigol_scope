@@ -106,6 +106,7 @@ string or device:parameter and the value is dictionary of the features.
 ['Coupling:']+ChLine('Coupling'),
 ['Termination:']+ChLine('Termination'),
 ['On/Off:']+ChLine('OnOff'),
+['RMS:']+ChLine('RMS'),
 ['Peak2Peak:']+ChLine('Peak2Peak'),
 ['Mean:']+ChLine('Mean'),
 [LYRow,'',{'For Experts only!':{**span(6,1),**font(14)}}],
